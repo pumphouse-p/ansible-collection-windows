@@ -1,2 +1,3 @@
 ---
-- name: microsoft.sql
+collections:
+  - name: microsoft.sql
