@@ -1,0 +1,7 @@
+---
+- name: Setup Microsoft SQL Server
+  hosts: all
+  become: true
+
+  roles:
+    - name: sqlserver

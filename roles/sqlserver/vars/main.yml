@@ -1,0 +1,8 @@
+---
+__sqlserver_required_psmodules:
+  - SQLServerDSC
+  - dbatools
+
+__sqlserver_required_features:
+  - NET-Framework-45-Features
+  - WAS

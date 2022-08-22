@@ -1,0 +1,22 @@
+galaxy_info:
+  author: Devin Parrish
+  description: Install and manages MS SQL Server on Windows
+  company: Red Hat
+
+  license: GPL-2.0-or-later
+
+  min_ansible_version: 2.9
+
+  platforms:
+    - name: Windows
+      versions:
+        - 2016
+        - 2019
+
+  galaxy_tags:
+    - system
+    - windows
+    - database
+    - sql_server
+
+dependencies: []

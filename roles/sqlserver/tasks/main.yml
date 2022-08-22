@@ -1,0 +1,42 @@
+---
+- name: Ensure Powershell modules are present
+  community.windows.win_psmodule:
+    name: "{{ item }}"
+    state: present
+  loop: __sqlserver_required_psmodules
+  tags:
+    - prereqs
+
+- name: Ensure Windows Features are present
+  ansible.windows.win_feature:
+    name: "{{ item }}"
+    state: present
+    include_sub_features: true
+  loop: __sqlserver_required_features
+  tags:
+    - prereqs
+
+- name: Reboot if needed
+  ansible.windows.win_reboot:
+    msg: "Ansible initiated reboot"
+  when: ansible_reboot_pending
+  tags:
+    - prereqs
+
+- name: Download SQL Server installer
+  ansible.windows.win_get_url:
+    url: "{{ sqlserver_installer_url }}"
+    dest: "{{ sqlserver_download_path }}\\SQLServer-Install.exe"
+  tags:
+    - install
+
+- name: Ensure SQL Server is installed
+  ansible.windows.win_dsc:
+    resource_name: SQLSetup
+    Action: Install
+    UpdateEnabled: true
+    SourcePath: "{{ sqlserver_download_path }}\\SQLServer-Install.exe"
+    InstanceName: "{{ sqlserver_instance_name }}"
+  register: __sql_server_install
+  tags:
+    - install
