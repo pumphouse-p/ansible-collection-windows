@@ -43,11 +43,11 @@
   ansible.windows.win_file:
     path: "{{ sqlserver_download_path }}"
     state: directory
-    
+
 - name: Download SQL Server installer
   ansible.windows.win_get_url:
     url: "{{ sqlserver_installer_url }}"
-    dest: "{{ sqlserver_download_path }}\SQLServer-Install.exe"
+    dest: "{{ sqlserver_download_path }}\\SQLServer-Install.exe"
   tags:
     - install
 
@@ -56,7 +56,7 @@
     resource_name: SQLSetup
     Action: Install
     UpdateEnabled: true
-    SourcePath: "{{ sqlserver_download_path }}\SQLServer-Install.exe"
+    SourcePath: "{{ sqlserver_download_path }}\\SQLServer-Install.exe"
     InstanceName: "{{ sqlserver_instance_name }}"
   register: __sql_server_install
   tags:
