@@ -3,7 +3,7 @@
   community.windows.win_psmodule:
     name: "{{ item }}"
     state: present
-  loop: __sqlserver_required_psmodules
+  loop: "{{ __sqlserver_required_psmodules }}"
   tags:
     - prereqs
 
@@ -12,7 +12,7 @@
     name: "{{ item }}"
     state: present
     include_sub_features: true
-  loop: __sqlserver_required_features
+  loop: "{{ __sqlserver_required_features }}"
   tags:
     - prereqs
 
