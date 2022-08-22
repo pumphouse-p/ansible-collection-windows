@@ -1,3 +1,4 @@
 ---
 collections:
   - name: microsoft.sql
+  - name: community.windows
