@@ -3,6 +3,7 @@
   community.windows.win_psmodule:
     name: "{{ item }}"
     state: present
+    accept_license: true
   loop: "{{ __sqlserver_required_psmodules }}"
   tags:
     - prereqs
