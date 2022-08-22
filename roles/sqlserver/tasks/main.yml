@@ -1,4 +1,14 @@
 ---
+- name: Ensure latest Powershell is installed
+  chocolatey.chocolatey.win_chocolatey:
+    name: powershell
+  register: __powershell_install
+
+- name: Reboot if needed
+  ansible.windows.win_reboot:
+    msg: "Ansible initiated reboot"
+  when: __powershell_install.changed
+  
 - name: Ensure Powershell modules are present
   community.windows.win_psmodule:
     name: "{{ item }}"
