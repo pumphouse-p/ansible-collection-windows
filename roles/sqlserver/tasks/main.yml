@@ -10,6 +10,11 @@
     msg: "Ansible initiated reboot"
   when: __powershell_install.changed
 
+- name: Ensure PowerShellGet is latest
+  community.windows.win_psmodule:
+    name: PowerShellGet
+    state: latest
+
 - name: Ensure Powershell modules are present
   community.windows.win_psmodule:
     name: "{{ item }}"
