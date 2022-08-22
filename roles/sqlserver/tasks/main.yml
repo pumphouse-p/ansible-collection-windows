@@ -39,6 +39,11 @@
   tags:
     - prereqs
 
+- name: Ensure Download destination exists
+  ansible.windows.win_file:
+    path: "{{ sqlserver_download_path }}"
+    state: directory
+    
 - name: Download SQL Server installer
   ansible.windows.win_get_url:
     url: "{{ sqlserver_installer_url }}"
