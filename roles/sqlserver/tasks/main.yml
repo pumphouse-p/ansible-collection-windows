@@ -2,6 +2,7 @@
 - name: Ensure latest Powershell is installed
   chocolatey.chocolatey.win_chocolatey:
     name: powershell
+    state: latest
   register: __powershell_install
 
 - name: Reboot if needed
