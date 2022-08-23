@@ -3,7 +3,7 @@
   ansible.windows.win_shell: Install-PackageProvider Nuget -Force
 
 - name: Force update of PowerShellGet
-  ansible.windows.win_shell: Update-Module -Name PowerShellGet -Force -AllowClobber
+  ansible.windows.win_shell: Install-Module -Name PowerShellGet -Force -AllowClobber
 
 - name: Ensure Powershell modules are present
   community.windows.win_psmodule:
