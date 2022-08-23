@@ -9,7 +9,7 @@ sqlserver_download_path: "C:\\tmp"
 sqlserver_install_path: "C:\\SQLServer"
 
 # SQL Server instance configuration
-sqlserver_instance_name: SQLDefaultInstance
+sqlserver_instance_name: Default
 sqlserver_drive: C
 sqlserver_port: 1433
 
