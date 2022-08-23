@@ -73,6 +73,19 @@
     UpdateEnabled: true
     SourcePath: "{{ sqlserver_install_path }}\\Media"
     InstanceName: "{{ sqlserver_instance_name }}"
+    InstallSharedDir: "{{ sqlserver_install_shared_dir }}"
+    InstallSharedwowDir: "{{ sqlserver_install_sharedwow_dir }}"
+    InstanceDir: "{{ sqlserver_instance_dir }}"
+    InstallSQLDataDir: "{{ sqlserver_install_sql_data_dir }}"
+    SQLUserDBDir: "{{ sqlserver_userdb_dir }}"
+    SQLUserDBLogDir: "{{ sqlserver_userdb_log_dir }}"
+    SQLTempDBDir: "{{ sqlserver_tempdb_dir }}"
+    SQLTempDBLogDir: "{{ sqlserver_tempdb_log_dir }}"
+    Features: "{{ sqlserver_features }}"
+    SQLCollation: "{{ sqlserver_collation }}"
+    BrowserSvcStartupType: "{{ sqlserver_startup_type }}"
+    SuppressReboot: "{{ sqlserver_suppress_reboot }}"
+    SQLSysAdminAccounts: "{{ sqlserver_sysadmin_accounts }}"
   register: __sql_server_install
   tags:
     - install
