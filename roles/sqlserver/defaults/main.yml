@@ -5,6 +5,9 @@ sqlserver_installer_url: "https://go.microsoft.com/fwlink/p/?linkid=866662"
 # Path to download setup files to
 sqlserver_download_path: "C:\\tmp"
 
+# Installation path
+sqlserver_install_path: "C:\\SQLServer"
+
 # SQL Server instance configuration
 sqlserver_instance_name: SQLDefaultInstance
 sqlserver_drive: C
