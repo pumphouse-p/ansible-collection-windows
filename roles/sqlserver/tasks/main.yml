@@ -1,4 +1,10 @@
 ---
+- name: Set PSGallery to Trusted
+  community.windows.win_psrepository:
+    name: PSGallery
+    state: present
+    installation_policy: trusted
+    
 - name: Force installation of NuGet
   ansible.windows.win_shell: Install-PackageProvider Nuget -Force
 
