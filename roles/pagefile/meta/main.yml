@@ -1,0 +1,21 @@
+---
+galaxy_info:
+  author: Devin Parrish
+  role_name: pagefile
+  namespace: pumphouse_p.windows
+  description: An Ansible role that manages the Windows pagefile
+
+  license: GPL
+
+  min_ansible_version: 2.9
+
+  galaxy_tags:
+    - windows
+    - pagefile
+
+  platforms:
+    - name: Windows
+      versions:
+        - all
+
+dependencies: []
