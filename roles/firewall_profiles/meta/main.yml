@@ -1,0 +1,21 @@
+---
+galaxy_info:
+  author: Devin Parrish
+  role_name: firewall_profiles
+  namespace: pumphouse_p.windows
+  description: An Ansible Role that manages the Windows Firewall Profiles
+
+  license: GPL
+
+  min_ansible_version: 2.9
+
+  galaxy_tags:
+    - windows
+    - firewall
+
+  platforms:
+    - name: Windows
+      versions:
+        - all
+
+dependencies: []

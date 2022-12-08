@@ -1,0 +1,7 @@
+---
+- name: "Ensure profiles are set to desired state"
+  community.windows.win_firewall:
+    state: "{{ firewall_profile_state }}"
+    profiles: "{{ firewall_profile_name }}"
+    inbound_action: "{{ firewall_profile_inbound_action | default(omit) }}"
+    outbound_action: "{{ firewall_profile_outbound_action | default(omit) }}"

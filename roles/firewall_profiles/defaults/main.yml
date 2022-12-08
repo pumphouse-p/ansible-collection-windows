@@ -1,0 +1,6 @@
+---
+firewall_profile_state: "enabled"
+firewall_profile_name:
+  - "Domain"
+  - "Private"
+  - "Public"
