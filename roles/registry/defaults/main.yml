@@ -1,0 +1,11 @@
+---
+# registry_entries:
+#   - name: MouseTrails
+#     path: HKLM:\ANSIBLE\Control Panel\Mouse
+#     data: 10
+#     hive: C:\Users\Default\NTUSER.dat
+#     state: present
+#     type: string
+#   - path: HKCU:\Software\MyCompany
+#     name: hello
+#     state: absent

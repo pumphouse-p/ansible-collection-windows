@@ -1,0 +1,21 @@
+---
+galaxy_info:
+  author: Devin Parrish
+  role_name: registry
+  namespace: pumphouse_p.windows
+  description: Ansible role that manages Windows registry entries
+
+  license: GPL
+
+  min_ansible_version: 2.9
+
+  galaxy_tags:
+    - windows
+    - registry
+
+  platforms:
+    - name: Windows
+      versions:
+        - all
+
+dependencies: []

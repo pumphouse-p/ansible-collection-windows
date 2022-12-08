@@ -1,0 +1,12 @@
+---
+- name: "Ensure entries are at desired state"
+  ansible.windows.win_regedit:
+    name: "{{ entry.name | default(omit) }}"
+    path: "{{ entry.path }}"
+    data: "{{ entry.data | default(omit) }}"
+    hive: "{{ entry.hive | default(omit) }}"
+    state: "{{ entry.state }}"
+    type: "{{ entry.type | default(omit) }}"
+  loop: "{{ registry_entries }}"
+  loop_control:
+    loop_var: entry
