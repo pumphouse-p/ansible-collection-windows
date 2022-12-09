@@ -1,0 +1,26 @@
+---
+- name: "Ensure downloads directory is present"
+  ansible.windows.win_file:
+    path: "{{ packages_msi_download_dir }}"
+    state: directory
+
+- name: "Install desired MSIs"
+  loop: "{{ packages_msi }}"
+  loop_control:
+    loop_var: msi_pkg
+  block:
+    - name: "Download installer from {{ msi_pkg.url }}"
+      ansible.windows.win_get_url:
+        url: "{{ msi_pkg.url }}"
+        dest: "{{ packages_msi_download_dir }}\\{{ msi_pkg.setup_filename | default(packages_msi_setup_filename) }}"
+      register: __setup_file
+
+    - name: "Install package from {{ __setup_file.dest }}"
+      ansible.windows.win_package:
+        path: "{{ __setup_file.dest }}"
+        arguments: "/passive"
+
+- name: "Cleanup downloads directory"
+  ansible.windows.win_file:
+    path: "{{ packages_msi_download_dir }}"
+    state: absent

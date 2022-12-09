@@ -1,0 +1,15 @@
+---
+- name: "Ensure chocolatey packages are absent"
+  chocolatey.chocolatey.win_chocolatey:
+    name: "{{ packages_chocolatey | selectattr('state', '==', 'absent') | map(attribute='name') | list }}"
+    state: absent
+
+- name: "Ensure chocolatey packages are present"
+  chocolatey.chocolatey.win_chocolatey:
+    name: "{{ packages_chocolatey | selectattr('state', '==', 'present') | map(attribute='name') | list }}"
+    state: present
+
+- name: "Ensure chocolatey packages are updated"
+  chocolatey.chocolatey.win_chocolatey:
+    name: "{{ packages_chocolatey | selectattr('state', '==', 'latest') | map(attribute='name') | list }}"
+    state: latest

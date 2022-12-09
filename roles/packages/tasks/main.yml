@@ -1,0 +1,10 @@
+---
+- name: "Handle packages via chocolatey"
+  ansible.builtin.include_tasks:
+    file: "chocolatey.yml"
+  when: packages_chocolatey is defined
+
+- name: "Handle packages via MSI"
+  ansible.builtin.include_tasks:
+    file: "msi.yml"
+  when: packages_msi is defined
