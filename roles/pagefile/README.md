@@ -33,7 +33,7 @@ None.
   become: true
 
   roles:
-  - role: pumphouse_p.windows.pagefile
+  - name: pumphouse_p.windows.pagefile
     vars:
       pagefile_drive: "C"
       pagefile_initial_size: 2048

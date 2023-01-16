@@ -1,0 +1,7 @@
+---
+- name: Ensure pagefile is configured
+  hosts: all
+  become: true
+
+  roles:
+    - name: pagefile
