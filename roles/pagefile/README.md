@@ -13,11 +13,11 @@ An Ansible Role that manages the Windows pagefile.
 
 Available variables are described in the table below.
 
-| Variable Name | Default | Required | Type | Description |
-|:-------------:|:-------:|:--------:|:----:|:-----------:|
-|     `pagefile_drive`     | `C` |    yes    | str  | The drive of the pagefile  |
-| `pagefile_initial_size` | None | yes | int | Initial size of the pagefile in megabytes |
-| `pagefile_max_size` | None | yes | int | Maximum size of the pagefile in megabytes |
+|      Variable Name      | Default | Required | Type |                Description                |
+|:-----------------------:|:-------:|:--------:|:----:|:-----------------------------------------:|
+|    `pagefile_drive`     |   `C`   |   yes    | str  |         The drive of the pagefile         |
+| `pagefile_initial_size` |  None   |   yes    | int  | Initial size of the pagefile in megabytes |
+|   `pagefile_max_size`   |  None   |   yes    | int  | Maximum size of the pagefile in megabytes |
 
 
 ## Dependencies
