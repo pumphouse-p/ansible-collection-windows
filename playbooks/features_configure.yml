@@ -1,0 +1,10 @@
+---
+- name: Manage Windows Features
+  hosts: all
+  become: true
+
+  roles:
+    - role: features
+      vars:
+        features_enabled: "{{ win_features_enabled.split('\n') }}"
+        features_disabled: "{{ win_features_disabled.split('\n') }}"
