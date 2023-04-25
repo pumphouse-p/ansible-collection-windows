@@ -13,6 +13,7 @@
         mssql_accept_microsoft_sql_server_standard_eula: true
         mssql_password: "{{ microsoft_sql_server_password }}"
         mssql_edition: Evaluation
+        mssql_version: "{{ microsoft_sql_server_version }}"
       when: ansible_os_family == 'RedHat'
 
     - name: Run Windows setup
