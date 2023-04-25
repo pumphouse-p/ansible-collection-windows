@@ -2,12 +2,19 @@
 - name: Setup Microsoft SQL Server
   hosts: all
   become: true
-  vars:
-    mssql_accept_microsoft_odbc_driver_17_for_sql_server_eula: true
-    mssql_accept_microsoft_cli_utilities_for_sql_server_eula: true
-    mssql_accept_microsoft_sql_server_standard_eula: true
-    mssql_password: "{{ microsoft_sql_server_password }}"
-    mssql_edition: Evaluation
+  
+  tasks:
+    - name: Run Linux setup
+      ansible.builtin.include_role:
+        name: microsoft.sql.server
+      vars:
+        mssql_accept_microsoft_odbc_driver_17_for_sql_server_eula: true
+        mssql_accept_microsoft_cli_utilities_for_sql_server_eula: true
+        mssql_accept_microsoft_sql_server_standard_eula: true
+        mssql_password: "{{ microsoft_sql_server_password }}"
+        mssql_edition: Evaluation
+      when: ansible_os_family == 'RedHat'
 
-  roles:
-    - name: microsoft.sql.server
+    - name: Run Windows setup
+      ansible.builtin.include_role:
+        name: sqlserver
