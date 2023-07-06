@@ -11,10 +11,14 @@
 
     - name: Construct list of dictionaries
       ansible.builtin.set_fact:
-        packages_chocolatey: "{{ {'name': __pkg} | combine({'state': 'present'}) }}"
+        packages_chocolatey: "{{ packages_chocolatey | default([]) + [{'name': __pkg, 'state': 'present'}] }}"
       loop: "{{ __package_list }}"
       loop_control:
         loop_var: __pkg
+
+    - name: Debug output
+      ansible.builtin.debug:
+        var: packages_chocolatey
 
   roles:
     - name: packages
