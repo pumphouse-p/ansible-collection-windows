@@ -6,7 +6,8 @@ An Ansible Role that manages disks configuration on Windows systems.
 
 ## Requirements
 
-* ``
+* `ansible.windows`
+* `community.windows`
 
 ## Role Variables
 
@@ -36,11 +37,6 @@ item supports the following parameters.
 |  `size_in_gb`  |       None        |   yes    | int  |         Desired size of partition          |
 |    `label`     |       None        |    no    | str  |        Label to apply to partition         |
 |   `fs_type`    | `default_fs_type` |    no    | str  |          Desired filesystem type           |
-
-## Dependencies
-
-* `ansible.windows`
-* `community.windows`
 
 ## Example Playbook
 
