@@ -1,0 +1,8 @@
+---
+- name: Get updates available
+  ansible.builtin.include_tasks:
+    file: updates_available.yml
+
+- name: Generate and publish report
+  ansible.builtin.include_tasks:
+    file: build_publish.yml

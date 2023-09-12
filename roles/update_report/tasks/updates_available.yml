@@ -1,0 +1,11 @@
+---
+- name: Retrieve list of updates available for installation
+  ansible.windows.win_updates:
+    category_names: '*'
+    state: searched
+  register: __updates_available
+
+- name: Set fact with updates available
+  ansible.builtin.set_fact:
+    __updates_count: "{{ __updates_available.found_update_count }}"
+    __updates: "{{ (__updates_available.updates.values() | list) if (__updates_available.updates is mapping) else (__updates_available.updates) }}"

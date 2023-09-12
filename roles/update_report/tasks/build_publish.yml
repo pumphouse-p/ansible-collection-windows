@@ -1,0 +1,28 @@
+---
+- block:
+    - name: Set fact for working directory
+      ansible.builtin.set_fact:
+        __report_workdir: "{{ ansible_env.HOME }}/report_workdir"
+
+    - name: Create working directory
+      ansible.builtin.file:
+        path: "{{ __report_workdir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Render template
+      ansible.builtin.template:
+        src: report.html.j2
+        dest: "{{ __report_workdir }}/index.html"
+        mode: '0644'
+
+    - name: Publish to S3 bucket
+      community.aws.s3_sync:
+        bucket: "{{ aws_s3_website_bucket_name }}"
+        file_root: "{{ __report_workdir }}"
+        include: "*"
+
+    - name: Output URL of report
+      ansible.builtin.debug:
+        msg: "Report URL: http://{{ aws_s3_website_bucket_name }}.s3-website-us-east-1.amazonaws.com"
+  delegate_to: localhost
