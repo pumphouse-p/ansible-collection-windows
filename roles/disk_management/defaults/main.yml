@@ -1,0 +1,24 @@
+---
+default_disk_style: gpt
+default_fs_type: NTFS
+
+disk_management_disks: []
+
+# disk_management_disks:
+#   - number: 1
+#     style: gpt
+#     partitions:
+#       - drive_letter: D
+#         size_in_gb: 10
+#         label: Data
+#         fs_type: NTFS
+#       - drive_letter: E
+#         size_in_gb: 40
+#         label: Media
+#         fs_type: NTFS
+#   - number: 2
+#     style: gpt
+#     partitions:
+#       - drive_letter: G
+#         size_in_gb: 5
+#         label: Share

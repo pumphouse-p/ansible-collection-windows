@@ -1,0 +1,30 @@
+---
+- name: Initialize disks
+  community.windows.win_initialize_disk:
+    disk_number: "{{ disk.number }}"
+    online: true
+    style: "{{ disk.style | default(default_disk_style) }}"
+  loop: "{{ disk_management_disks }}"
+  loop_control:
+    loop_var: disk
+  tags:
+    - disk_init
+
+- name: Partition disks
+  community.windows.win_partition:
+    drive_letter: "{{ item.1.drive_letter }}"
+    disk_number: "{{ item.0.number }}"
+    partition_size: "{{ item.1.size_in_gb ~ ' GB' }}"
+    state: "{{ item.1.state | default('present') }}"
+  loop: "{{ q('ansible.builtin.subelements', disk_management_disks, 'partitions', {'skip_missing': True}) }}"
+  tags:
+    - disk_partition
+
+- name: Write filesystems
+  community.windows.win_format:
+    drive_letter: "{{ item.1.drive_letter }}"
+    label: "{{ item.1.label | default(omit) }}"
+    file_system: "{{ item.1.fs_type | default(default_fs_type) }}"
+  loop: "{{ q('ansible.builtin.subelements', disk_management_disks, 'partitions', {'skip_missing': True}) }}"
+  tags:
+    - disk_write_fs
