@@ -2,7 +2,7 @@
 - block:
     - name: Set fact for working directory
       ansible.builtin.set_fact:
-        __report_workdir: "{{ ansible_env.HOME }}/report_workdir"
+        __report_workdir: "/tmp/report_workdir"
 
     - name: Create working directory
       ansible.builtin.file:
