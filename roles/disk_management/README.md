@@ -11,7 +11,7 @@ An Ansible Role that manages disks configuration on Windows systems.
 
 ## Role Variables
 
-Available variables are described in the table below. Example is found further down in this document.
+Available variables are described in the table below. [Example](#example-playbook) is found further down in this document.
 
 |      Variable Name      | Default | Required |    Type    |                          Description                          |
 |:-----------------------:|:-------:|:--------:|:----------:|:-------------------------------------------------------------:|
