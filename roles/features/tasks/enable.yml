@@ -1,0 +1,13 @@
+---
+- name: Ensure features are present
+  ansible.windows.win_feature:
+    name: "{{ features_enabled }}"
+    state: present
+  register: __features_enabled
+
+- name: Reboot if needed
+  ansible.builtin.debug:
+    msg: Reboot required is {{ __features_enabled.reboot_required }}
+  changed_when:
+    - __features_enabled.reboot_required
+  notify: reboot system

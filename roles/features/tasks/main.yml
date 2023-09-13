@@ -1,22 +1,10 @@
 ---
-- name: "Ensure features are present"
-  ansible.windows.win_feature:
-    name: "{{ features_enabled }}"
-    state: present
-  register: __features_enabled
+- name: Enable features
+  ansible.builtin.include_tasks:
+    file: enable.yml
   when: features_enabled is defined
 
-- name: "Ensure features are not present"
-  ansible.windows.win_feature:
-    name: "{{ features_disabled }}"
-    state: absent
-  register: __features_disabled
+- name: Disable features
+  ansible.builtin.include_tasks:
+    file: disable.yml
   when: features_disabled is defined
-
-- name: "Reboot when necessary"
-  ansible.builtin.debug:
-    msg: "Reboot required is {{ __features_enabled.reboot_required }} and {{ __features_disabled.reboot_required }}"
-  changed_when:
-    - __features_enabled.reboot_required or
-      __features_disabled.reboot_required
-  notify: reboot system
