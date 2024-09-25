@@ -24,5 +24,6 @@
 
     - name: Output URL of report
       ansible.builtin.debug:
-        msg: "Report URL: http://{{ aws_s3_website_bucket_name }}.s3-website-us-east-1.amazonaws.com"
+        msg: "Report URL: http://{{ aws_s3_website_bucket_name }}.s3-website-us-east-2.amazonaws.com"
   delegate_to: localhost
+  become: false
