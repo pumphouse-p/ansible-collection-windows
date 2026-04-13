@@ -1,0 +1,36 @@
+---
+# Example inventory file for Windows network configuration
+# Save as inventory.yml and update with your actual server details
+
+all:
+  children:
+    windows_servers:
+      hosts:
+        win-server-01:
+          ansible_host: 192.168.1.50
+          network_interface_name: "Ethernet0"
+          network_interface_ip_address: "192.168.1.100"
+          network_interface_gateway: "192.168.1.1"
+
+        win-server-02:
+          ansible_host: 192.168.1.51
+          network_interface_name: "Ethernet"
+          network_interface_ip_address: "192.168.1.101"
+          network_interface_gateway: "192.168.1.1"
+
+      vars:
+        # Common WinRM connection settings
+        ansible_connection: winrm
+        ansible_port: 5986
+        ansible_winrm_transport: ntlm
+        ansible_winrm_server_cert_validation: ignore
+
+        # Common network settings
+        network_interface_prefix_length: 24
+        network_interface_dns_servers:
+          - "8.8.8.8"
+          - "8.8.4.4"
+
+        # Credentials (use ansible-vault in production!)
+        ansible_user: "Administrator"
+        # ansible_password: "SecurePassword123!"  # Use vault instead

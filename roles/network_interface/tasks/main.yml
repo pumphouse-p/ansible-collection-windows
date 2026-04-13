@@ -1,0 +1,121 @@
+---
+- name: Get network adapter information
+  ansible.windows.win_shell: |
+    Get-NetAdapter -Name "{{ network_interface_name }}" | Select-Object Name, InterfaceIndex, Status | ConvertTo-Json
+  register: network_adapter_info
+  changed_when: false
+
+- name: Parse adapter information
+  ansible.builtin.set_fact:
+    adapter_details: "{{ network_adapter_info.stdout | from_json }}"
+
+- name: Display current adapter status
+  ansible.builtin.debug:
+    msg: "Network adapter '{{ adapter_details.Name }}' (Index: {{ adapter_details.InterfaceIndex }}) is {{ adapter_details.Status }}"
+
+- name: Configure DHCP for network interface
+  when: network_interface_use_dhcp | bool
+  block:
+    - name: Remove existing static IP configuration
+      ansible.windows.win_shell: |
+        Remove-NetIPAddress -InterfaceAlias "{{ network_interface_name }}" -Confirm:$false -ErrorAction SilentlyContinue
+        Remove-NetRoute -InterfaceAlias "{{ network_interface_name }}" -Confirm:$false -ErrorAction SilentlyContinue
+      register: remove_static_result
+      failed_when: false
+      changed_when: remove_static_result.rc == 0
+
+    - name: Enable DHCP on interface
+      ansible.windows.win_shell: |
+        Set-NetIPInterface -InterfaceAlias "{{ network_interface_name }}" -Dhcp Enabled
+      register: dhcp_result
+      changed_when: true
+
+    - name: Set DNS servers to automatic
+      ansible.windows.win_shell: |
+        Set-DnsClientServerAddress -InterfaceAlias "{{ network_interface_name }}" -ResetServerAddresses
+      register: dns_auto_result
+      changed_when: true
+
+- name: Configure static IP for network interface
+  when: not (network_interface_use_dhcp | bool)
+  block:
+    - name: Validate required variables for static IP
+      ansible.builtin.assert:
+        that:
+          - network_interface_ip_address | length > 0
+          - network_interface_prefix_length is defined
+        fail_msg: "network_interface_ip_address and network_interface_prefix_length are required for static IP configuration"
+
+    - name: Get current IP configuration
+      ansible.windows.win_shell: |
+        Get-NetIPAddress -InterfaceAlias "{{ network_interface_name }}" -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+        Select-Object IPAddress, PrefixLength | ConvertTo-Json
+      register: current_ip_config
+      changed_when: false
+      failed_when: false
+
+    - name: Remove existing IP address configuration
+      ansible.windows.win_shell: |
+        Remove-NetIPAddress -InterfaceAlias "{{ network_interface_name }}" -AddressFamily IPv4 -Confirm:$false -ErrorAction SilentlyContinue
+      when: network_interface_remove_existing | bool
+      register: remove_ip_result
+      failed_when: false
+      changed_when: remove_ip_result.rc == 0
+
+    - name: Remove existing default gateway
+      ansible.windows.win_shell: |
+        Remove-NetRoute -InterfaceAlias "{{ network_interface_name }}" -DestinationPrefix "0.0.0.0/0" -Confirm:$false -ErrorAction SilentlyContinue
+      when:
+        - network_interface_remove_existing | bool
+        - network_interface_gateway | length > 0
+      register: remove_gateway_result
+      failed_when: false
+      changed_when: remove_gateway_result.rc == 0
+
+    - name: Disable DHCP on interface
+      ansible.windows.win_shell: |
+        Set-NetIPInterface -InterfaceAlias "{{ network_interface_name }}" -Dhcp Disabled
+      register: disable_dhcp_result
+      changed_when: true
+
+    - name: Configure static IP address
+      ansible.windows.win_shell: |
+        New-NetIPAddress -InterfaceAlias "{{ network_interface_name }}" `
+          -IPAddress "{{ network_interface_ip_address }}" `
+          -PrefixLength {{ network_interface_prefix_length }} `
+          {% if network_interface_gateway | length > 0 %}-DefaultGateway "{{ network_interface_gateway }}"{% endif %} `
+          -ErrorAction Stop
+      register: ip_config_result
+      changed_when: true
+      failed_when: ip_config_result.rc != 0
+
+    - name: Configure DNS servers
+      ansible.windows.win_shell: |
+        Set-DnsClientServerAddress -InterfaceAlias "{{ network_interface_name }}" `
+          -ServerAddresses {{ network_interface_dns_servers | join(',') }}
+      when: network_interface_dns_servers | length > 0
+      register: dns_config_result
+      changed_when: true
+
+- name: Verify network configuration
+  ansible.windows.win_shell: |
+    $adapter = Get-NetIPAddress -InterfaceAlias "{{ network_interface_name }}" -AddressFamily IPv4 |
+      Select-Object IPAddress, PrefixLength, InterfaceAlias
+    $dns = Get-DnsClientServerAddress -InterfaceAlias "{{ network_interface_name }}" -AddressFamily IPv4 |
+      Select-Object ServerAddresses
+    $gateway = Get-NetRoute -InterfaceAlias "{{ network_interface_name }}" -DestinationPrefix "0.0.0.0/0" -ErrorAction SilentlyContinue |
+      Select-Object NextHop
+
+    @{
+      Interface = $adapter.InterfaceAlias
+      IPAddress = $adapter.IPAddress
+      PrefixLength = $adapter.PrefixLength
+      Gateway = $gateway.NextHop
+      DNSServers = $dns.ServerAddresses
+    } | ConvertTo-Json
+  register: final_config
+  changed_when: false
+
+- name: Display final network configuration
+  ansible.builtin.debug:
+    msg: "{{ final_config.stdout | from_json }}"

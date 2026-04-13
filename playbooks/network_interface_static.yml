@@ -1,0 +1,39 @@
+---
+- name: Configure Windows network interface with static IP
+  hosts: windows_servers
+  gather_facts: false
+
+  vars:
+    # WinRM connection settings
+    ansible_connection: winrm
+    ansible_port: 5986
+    ansible_winrm_transport: ntlm
+    ansible_winrm_server_cert_validation: ignore
+    ansible_user: "{{ windows_admin_user | default('Administrator') }}"
+    ansible_password: "{{ windows_admin_password }}"
+
+    # Network interface configuration
+    network_interface_name: "Ethernet0"
+    network_interface_ip_address: "192.168.1.100"
+    network_interface_prefix_length: 24
+    network_interface_gateway: "192.168.1.1"
+    network_interface_dns_servers:
+      - "8.8.8.8"
+      - "8.8.4.4"
+    network_interface_use_dhcp: false
+    network_interface_remove_existing: true
+
+  roles:
+    - network_interface
+
+  post_tasks:
+    - name: Test network connectivity
+      ansible.windows.win_shell: |
+        Test-Connection -ComputerName "{{ network_interface_gateway }}" -Count 2 -Quiet
+      register: connectivity_test
+      changed_when: false
+      failed_when: false
+
+    - name: Display connectivity test result
+      ansible.builtin.debug:
+        msg: "Gateway connectivity: {{ 'SUCCESS' if connectivity_test.stdout.strip() == 'True' else 'FAILED' }}"

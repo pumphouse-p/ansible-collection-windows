@@ -1,0 +1,35 @@
+---
+# Example group variables for windows_servers group
+# Place in group_vars/windows_servers.yml or group_vars/windows_servers/
+
+# WinRM Connection Settings
+ansible_connection: winrm
+ansible_port: 5986
+ansible_winrm_transport: ntlm
+ansible_winrm_server_cert_validation: ignore
+
+# Alternative transports:
+# ansible_winrm_transport: certificate  # For certificate-based auth
+# ansible_winrm_transport: kerberos     # For Kerberos auth
+# ansible_winrm_transport: basic        # For basic auth (HTTP)
+
+# Connection timeouts
+ansible_winrm_connection_timeout: 30
+ansible_winrm_operation_timeout: 60
+ansible_winrm_read_timeout: 70
+
+# Credentials
+# IMPORTANT: Use ansible-vault to encrypt sensitive data!
+# Create with: ansible-vault create group_vars/windows_servers/vault.yml
+# Then reference: ansible_password: "{{ vault_windows_admin_password }}"
+windows_admin_user: "Administrator"
+# windows_admin_password: "{{ vault_windows_admin_password }}"
+
+# Common Network Settings
+network_interface_prefix_length: 24
+network_interface_remove_existing: true
+
+# Common DNS Servers
+network_interface_dns_servers:
+  - "8.8.8.8"    # Google DNS Primary
+  - "8.8.4.4"    # Google DNS Secondary

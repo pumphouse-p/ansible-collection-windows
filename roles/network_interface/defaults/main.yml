@@ -1,0 +1,22 @@
+---
+# Default variables for network_interface role
+
+# Network interface name (e.g., "Ethernet", "Ethernet0", "Local Area Connection")
+network_interface_name: "Ethernet"
+
+# IP address configuration
+network_interface_ip_address: ""
+network_interface_prefix_length: 24
+network_interface_gateway: ""
+
+# DNS server addresses (list)
+network_interface_dns_servers: []
+
+# Whether to use DHCP instead of static IP
+network_interface_use_dhcp: false
+
+# Whether to remove existing IP configuration before applying new one
+network_interface_remove_existing: true
+
+# Connection validation timeout
+network_interface_validation_timeout: 30
