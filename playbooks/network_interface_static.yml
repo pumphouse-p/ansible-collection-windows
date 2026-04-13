@@ -5,12 +5,12 @@
 
   vars:
     # WinRM connection settings
-    ansible_connection: winrm
-    ansible_port: 5986
-    ansible_winrm_transport: ntlm
-    ansible_winrm_server_cert_validation: ignore
-    ansible_user: "{{ windows_admin_user | default('Administrator') }}"
-    ansible_password: "{{ windows_admin_password }}"
+    # ansible_connection: winrm
+    # ansible_port: 5986
+    # ansible_winrm_transport: ntlm
+    # ansible_winrm_server_cert_validation: ignore
+    # ansible_user: "{{ windows_admin_user | default('Administrator') }}"
+    # ansible_password: "{{ windows_admin_password }}"
 
     # Network interface configuration
     network_interface_name: "Ethernet0"
