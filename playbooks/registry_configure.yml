@@ -1,0 +1,8 @@
+---
+- name: Manage Windows Registry Entries
+  hosts: "{{ s_hosts | default('all') }}"
+  become: true
+  gather_facts: true
+
+  roles:
+    - role: registry
