@@ -2,9 +2,7 @@
 - name: Manage Windows Features
   hosts: all
   become: true
+  gather_facts: true
 
   roles:
     - role: features
-      vars:
-        features_enabled: "{{ win_features_enabled }}"
-        features_disabled: "{{ win_features_disabled }}"
