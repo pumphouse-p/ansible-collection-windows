@@ -1,6 +1,6 @@
 ---
 - name: Manage Windows Features
-  hosts: all
+  hosts: "{{ s_hosts | default('all') }}"
   become: true
   gather_facts: true
 

@@ -1,6 +1,6 @@
 ---
 - name: Ensure packages are present
-  hosts: "{{ vm_name | default('all') }}"
+  hosts: "{{ s_hosts | default('all') }}"
   become: true
   gather_facts: true
 

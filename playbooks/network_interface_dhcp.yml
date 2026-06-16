@@ -1,6 +1,6 @@
 ---
 - name: Configure Windows network interface with DHCP
-  hosts: windows_servers
+  hosts: "{{ s_hosts | default('all') }}"
   gather_facts: false
 
   vars:

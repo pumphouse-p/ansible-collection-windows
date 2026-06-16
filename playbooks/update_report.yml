@@ -1,6 +1,6 @@
 ---
 - name: Generate and publish Windows update report
-  hosts: all
+  hosts: "{{ s_hosts | default('all') }}"
   become: true
   gather_facts: true
 
