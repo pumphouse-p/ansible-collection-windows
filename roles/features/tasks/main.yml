@@ -1,10 +1,52 @@
 ---
-- name: Enable features
+# Main tasks file for pumphouse_p.windows.features
+
+- name: Validate role variables
+  ansible.builtin.assert:
+    that:
+      - features_enabled is defined
+      - features_disabled is defined
+      - features_enabled is sequence
+      - features_disabled is sequence
+    fail_msg: "features_enabled and features_disabled must be defined as lists"
+    success_msg: "Role variables validated successfully"
+  tags:
+    - features
+    - validation
+
+- name: Display features to be managed
+  ansible.builtin.debug:
+    msg:
+      - "Features to enable: {{ features_enabled | length }} item(s)"
+      - "Features to disable: {{ features_disabled | length }} item(s)"
+  when: features_enabled | length > 0 or features_disabled | length > 0
+  tags:
+    - features
+    - debug
+
+- name: Enable Windows features
   ansible.builtin.include_tasks:
     file: enable.yml
-  when: features_enabled is defined
+  when:
+    - features_enabled is defined
+    - features_enabled | length > 0
+  tags:
+    - features
+    - enable
 
-- name: Disable features
+- name: Disable Windows features
   ansible.builtin.include_tasks:
     file: disable.yml
-  when: features_disabled is defined
+  when:
+    - features_disabled is defined
+    - features_disabled | length > 0
+  tags:
+    - features
+    - disable
+
+- name: Display reboot status
+  ansible.builtin.debug:
+    msg: "System reboot {{ 'is required' if _features_reboot_required | default(false) else 'is not required' }}"
+  tags:
+    - features
+    - debug

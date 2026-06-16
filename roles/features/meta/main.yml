@@ -2,19 +2,27 @@
 galaxy_info:
   author: Devin Parrish
   role_name: features
-  namespace: pumphouse_p.windows
-  description: An Ansible Role that manages Windows features
+  namespace: pumphouse_p
+  description: An Ansible Role that manages Windows features and roles installation
 
-  license: GPL
+  license: GPL-2.0-or-later
 
-  min_ansible_version: 2.9
+  min_ansible_version: "2.10"
 
   galaxy_tags:
-    - ROLE_TAG
+    - windows
+    - features
+    - system
+    - configuration
+    - administration
 
   platforms:
     - name: Windows
       versions:
-        - all
+        - "2012"
+        - "2012R2"
+        - "2016"
+        - "2019"
+        - "2022"
 
 dependencies: []

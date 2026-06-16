@@ -1,13 +1,39 @@
 ---
-- name: Ensure features are not present
-  ansible.windows.win_feature:
-    name: "{{ features_disabled }}"
-    state: absent
-  register: __features_disabled
+# Tasks to disable Windows features
 
-- name: Reboot when necessary
+- name: Disable Windows features
+  ansible.windows.win_feature:
+    name: "{{ item if item is string else item.name }}"
+    state: absent
+  loop: "{{ features_disabled }}"
+  loop_control:
+    label: "{{ item if item is string else item.name }}"
+  register: _features_disable_result
+  failed_when:
+    - _features_disable_result is failed
+    - features_fail_on_missing | bool
+  tags:
+    - features
+    - disable
+
+- name: Check if any disabled feature requires reboot
+  ansible.builtin.set_fact:
+    _features_reboot_required: true
+  when:
+    - _features_disable_result is defined
+    - _features_disable_result.results is defined
+    - _features_disable_result.results | selectattr('reboot_required', 'defined') | selectattr('reboot_required', 'equalto', true) | list | length > 0
+  tags:
+    - features
+    - disable
+
+- name: Trigger reboot handler if needed after disabling features
   ansible.builtin.debug:
-    msg: Reboot required is {{ __features_disabled.reboot_required }}
+    msg: "Reboot required after disabling features"
   changed_when:
-    - __features_disabled.reboot_required
+    - _features_reboot_required | default(false) | bool
+    - features_auto_reboot | bool
   notify: reboot system
+  tags:
+    - features
+    - disable

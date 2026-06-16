@@ -1,13 +1,41 @@
 ---
-- name: Ensure features are present
-  ansible.windows.win_feature:
-    name: "{{ features_enabled }}"
-    state: present
-  register: __features_enabled
+# Tasks to enable Windows features
 
-- name: Reboot if needed
+- name: Enable Windows features
+  ansible.windows.win_feature:
+    name: "{{ item if item is string else item.name }}"
+    state: present
+    include_sub_features: "{{ item.include_sub_features | default(features_include_sub_features) if item is mapping else features_include_sub_features }}"
+    include_management_tools: "{{ item.include_management_tools | default(features_include_management_tools) if item is mapping else features_include_management_tools }}"
+  loop: "{{ features_enabled }}"
+  loop_control:
+    label: "{{ item if item is string else item.name }}"
+  register: _features_enable_result
+  failed_when:
+    - _features_enable_result is failed
+    - features_fail_on_missing | bool
+  tags:
+    - features
+    - enable
+
+- name: Check if any enabled feature requires reboot
+  ansible.builtin.set_fact:
+    _features_reboot_required: true
+  when:
+    - _features_enable_result is defined
+    - _features_enable_result.results is defined
+    - _features_enable_result.results | selectattr('reboot_required', 'defined') | selectattr('reboot_required', 'equalto', true) | list | length > 0
+  tags:
+    - features
+    - enable
+
+- name: Trigger reboot handler if needed after enabling features
   ansible.builtin.debug:
-    msg: Reboot required is {{ __features_enabled.reboot_required }}
+    msg: "Reboot required after enabling features"
   changed_when:
-    - __features_enabled.reboot_required
+    - _features_reboot_required | default(false) | bool
+    - features_auto_reboot | bool
   notify: reboot system
+  tags:
+    - features
+    - enable

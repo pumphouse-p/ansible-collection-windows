@@ -1,0 +1,40 @@
+---
+# defaults file for pumphouse_p.windows.features
+
+# List of Windows features to enable
+# Each item can be a string (feature name) or a dict with additional options
+# Example:
+#   features_enabled:
+#     - Web-Server
+#     - name: Hyper-V
+#       include_sub_features: true
+#       include_management_tools: true
+features_enabled: []
+
+# List of Windows features to disable
+# Each item can be a string (feature name) or a dict with additional options
+# Example:
+#   features_disabled:
+#     - SMB1
+#     - name: Windows-Defender
+#       remove_payload: true
+features_disabled: []
+
+# Whether to include sub-features when enabling features
+# This can be overridden per-feature if using dict format
+features_include_sub_features: true
+
+# Whether to include management tools when enabling features
+# This can be overridden per-feature if using dict format
+features_include_management_tools: false
+
+# Whether to automatically reboot the system if required after feature changes
+# If false, the role will notify the reboot handler but not execute it automatically
+features_auto_reboot: true
+
+# Maximum time to wait for reboot to complete (in seconds)
+features_reboot_timeout: 3600
+
+# Whether to fail if a feature is not found
+# If false, missing features will be skipped with a warning
+features_fail_on_missing: true

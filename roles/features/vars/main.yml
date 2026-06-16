@@ -1,0 +1,6 @@
+---
+# vars file for pumphouse_p.windows.features
+
+# Internal variable to track if a reboot is required
+# This is set by the enable.yml and disable.yml tasks
+_features_reboot_required: false
