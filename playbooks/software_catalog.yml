@@ -1,0 +1,7 @@
+---
+- name: Maintain approved software from the central catalog
+  hosts: "{{ s_hosts | default('all') }}"
+  gather_facts: false
+
+  roles:
+    - role: software_catalog

@@ -1,0 +1,60 @@
+---
+# Example inventory for pumphouse_p.windows.software_catalog
+#
+# App groups (names must match ids in roles/software_catalog/vars/software_catalog.yml)
+# contain "bundle" groups. Hosts join one bundle and inherit every app group
+# that bundle belongs to. Hosts may also be placed directly in app groups.
+#
+# In AAP: create the same groups in the inventory, add bundle groups as
+# child groups of each app group, then add hosts to a bundle.
+
+all:
+  children:
+    windows:
+      vars:
+        ansible_connection: winrm
+        ansible_port: 5986
+        ansible_winrm_transport: ntlm
+
+      children:
+        # ------------------------------------------------------------------
+        # App groups - one per catalog id
+        # ------------------------------------------------------------------
+        notepadplusplus:
+          children:
+            bundle_basic:
+            bundle_full:
+            bundle_no_node:
+
+        java_runtime:
+          children:
+            bundle_basic:
+            bundle_full:
+            bundle_no_node:
+
+        dotnet_runtime:
+          children:
+            bundle_full:
+            bundle_no_node:
+
+        nodejs:
+          children:
+            bundle_full:
+
+        # ------------------------------------------------------------------
+        # Bundles - put hosts here
+        # ------------------------------------------------------------------
+        bundle_basic:            # Notepad++, JRE
+          hosts:
+            host_a:
+
+        bundle_full:             # everything
+          hosts:
+            host_b:
+              # Per-host version pin (could also be set on the group)
+              software_catalog_pins:
+                nodejs: "20.18.0"
+
+        bundle_no_node:          # everything except Node.js
+          hosts:
+            host_c:

@@ -1,0 +1,121 @@
+---
+# =============================================================================
+# Central Software Catalog - pumphouse_p.windows.software_catalog
+# =============================================================================
+# This is the single source of truth for every APPROVED application, every
+# APPROVED version of it, and HOW it is installed. Hosts only choose WHICH
+# entries (and optionally which version) they want via `software_catalog_apps`;
+# they never define install details themselves. Anything not listed here
+# cannot be installed by this role.
+#
+# Entry schema (key = catalog id that hosts reference):
+#
+#   display_name:     Human readable name (used in task output / reporting)
+#   method:           msi | exe
+#   default_version:  Version used when a host doesn't request one  (required)
+#   side_by_side:     true if multiple versions can be installed at
+#                     once (a host may then request several)       (default false)
+#   versions:         Map of approved version -> version-specific fields
+#                                                                  (required)
+#
+#   Any field below may be set at the app level (shared by all versions) or
+#   inside a version (overrides the app-level value for that version).
+#
+#   url:              Download URL or UNC path to the installer    (required)
+#   checksum:         SHA256 of the installer                      (recommended)
+#   arguments:        Silent install arguments / msiexec properties
+#
+#   -- method: msi --
+#   ProductCode is read from the cached MSI, so install and uninstall are
+#   idempotent without hard-coding GUIDs.
+#
+#   -- method: exe --
+#   arguments:           Silent install switches                   (required)
+#   creates_path:        File/dir that exists when installed       (required)
+#   creates_version:     4-part file version of creates_path, e.g.
+#                        "8.7.1.0" - identifies which version is
+#                        installed so switching versions works     (optional)
+#   uninstall_arguments: Silent uninstall switches                 (required for absent)
+#   product_id:          Uninstall registry key name. When set, removal runs
+#                        the registered UninstallString instead of
+#                        re-running the installer                  (optional)
+#   wait_for_children:   Wait for spawned child processes (needed for
+#                        NSIS uninstallers that re-launch themselves) (optional)
+#
+# To approve a new version: add it under `versions` and, to roll it out to
+# hosts that don't pin a version, update `default_version`.
+# =============================================================================
+
+software_catalog_approved:
+
+  # Single install - choosing a version installs over whatever is present.
+  notepadplusplus:
+    display_name: Notepad++ (x64)
+    method: exe
+    default_version: "8.7.1"
+    side_by_side: false
+    arguments: /S
+    creates_path: C:\Program Files\Notepad++\notepad++.exe
+    product_id: Notepad++
+    uninstall_arguments: /S
+    wait_for_children: true
+    versions:
+      "8.7.1":
+        url: https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/v8.7.1/npp.8.7.1.Installer.x64.exe
+        checksum: ""
+        creates_version: "8.7.1.0"
+      "8.6.9":
+        url: https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/v8.6.9/npp.8.6.9.Installer.x64.exe
+        checksum: ""
+        creates_version: "8.6.9.0"
+
+  # Single install - Node.js MSIs share an UpgradeCode. Moving to a newer
+  # version upgrades in place; the MSI refuses to downgrade, so remove the
+  # newer version (state: absent) before pinning an older one.
+  nodejs:
+    display_name: Node.js LTS (x64)
+    method: msi
+    default_version: "22.11.0"
+    side_by_side: false
+    arguments: ADDLOCAL=ALL
+    versions:
+      "22.11.0":
+        url: https://nodejs.org/dist/v22.11.0/node-v22.11.0-x64.msi
+        checksum: ""
+      "20.18.0":
+        url: https://nodejs.org/dist/v20.18.0/node-v20.18.0-x64.msi
+        checksum: ""
+
+  # Side-by-side - each .NET runtime installs to its own versioned folder.
+  dotnet_runtime:
+    display_name: .NET Runtime (x64)
+    method: exe
+    default_version: "8.0.11"
+    side_by_side: true
+    arguments: /install /quiet /norestart
+    uninstall_arguments: /uninstall /quiet /norestart
+    versions:
+      "8.0.11":
+        url: https://builds.dotnet.microsoft.com/dotnet/Runtime/8.0.11/dotnet-runtime-8.0.11-win-x64.exe
+        checksum: ""
+        creates_path: C:\Program Files\dotnet\shared\Microsoft.NETCore.App\8.0.11
+      "9.0.0":
+        url: https://builds.dotnet.microsoft.com/dotnet/Runtime/9.0.0/dotnet-runtime-9.0.0-win-x64.exe
+        checksum: ""
+        creates_path: C:\Program Files\dotnet\shared\Microsoft.NETCore.App\9.0.0
+
+  # Side-by-side - each Temurin major version is a separate MSI product with
+  # its own install directory. JAVA_HOME/PATH follow the last one installed.
+  java_runtime:
+    display_name: Eclipse Temurin JRE (x64)
+    method: msi
+    default_version: "21.0.5+11"
+    side_by_side: true
+    arguments: ADDLOCAL=FeatureMain,FeatureEnvironment,FeatureJarFileRunWith,FeatureJavaHome
+    versions:
+      "21.0.5+11":
+        url: https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.5%2B11/OpenJDK21U-jre_x64_windows_hotspot_21.0.5_11.msi
+        checksum: ""
+      "17.0.13+11":
+        url: https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.13%2B11/OpenJDK17U-jre_x64_windows_hotspot_17.0.13_11.msi
+        checksum: ""

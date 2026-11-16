@@ -1,0 +1,229 @@
+---
+# Main tasks file for pumphouse_p.windows.software_catalog
+
+- name: Load central software catalog
+  ansible.builtin.include_vars:
+    file: "{{ software_catalog_file }}"
+  tags:
+    - software_catalog
+    - validation
+
+# Explicit list (survey / extra vars) wins; otherwise use inventory groups.
+- name: Determine selection source
+  ansible.builtin.set_fact:
+    _software_catalog_source: "{{ 'explicit' if _explicit | length > 0 else ('groups' if software_catalog_use_groups | bool else 'none') }}"
+    _software_catalog_selection: >-
+      {{ _explicit if _explicit | length > 0
+         else (group_names | select('in', software_catalog_approved.keys() | list) | list
+               if software_catalog_use_groups | bool else []) }}
+  vars:
+    _explicit: >-
+      {{ (software_catalog_apps.splitlines() | map('trim') | select | list)
+         if software_catalog_apps is string else (software_catalog_apps | default([], true)) }}
+  tags:
+    - software_catalog
+    - validation
+
+- name: Normalize requested applications
+  ansible.builtin.set_fact:
+    _software_catalog_requested: "{{ _software_catalog_items | unique }}"
+  vars:
+    _software_catalog_items: >-
+      {%- set out = [] -%}
+      {%- for item in _software_catalog_selection -%}
+      {%-   if item is mapping -%}
+      {%-     set entry = item -%}
+      {%-   elif '@' in item -%}
+      {%-     set entry = {'name': item.split('@', 1)[0] | trim, 'version': item.split('@', 1)[1] | trim} -%}
+      {%-   else -%}
+      {%-     set entry = {'name': item | trim} -%}
+      {%-   endif -%}
+      {%-   set app = software_catalog_approved[entry.name] | default({}) -%}
+      {%-   set version = entry.version | default(software_catalog_pins[entry.name] | default(app.default_version | default(''))) -%}
+      {%-   set _ = out.append({'name': entry.name,
+                                'version': version | string,
+                                'state': entry.state | default(software_catalog_default_state)}) -%}
+      {%- endfor -%}
+      {{ out }}
+  tags:
+    - software_catalog
+    - validation
+
+- name: Show selected applications
+  ansible.builtin.debug:
+    msg: >-
+      Source: {{ _software_catalog_source }} |
+      {{ _software_catalog_requested | map(attribute='name')
+         | zip(_software_catalog_requested | map(attribute='version'),
+               _software_catalog_requested | map(attribute='state'))
+         | map('join', ' ') | join(', ') | default('nothing selected', true) }}
+  tags:
+    - software_catalog
+    - validation
+
+- name: Validate requested applications are approved
+  ansible.builtin.assert:
+    that:
+      - software_catalog_approved is mapping
+      - _software_catalog_unapproved | length == 0
+    fail_msg: >-
+      Not in the approved software catalog: {{ _software_catalog_unapproved | join(', ') }}.
+      Approved: {{ software_catalog_approved.keys() | list | join(', ') }}
+    quiet: true
+  vars:
+    _software_catalog_unapproved: >-
+      {{ _software_catalog_requested | map(attribute='name')
+         | difference(software_catalog_approved.keys() | list) }}
+  tags:
+    - software_catalog
+    - validation
+
+- name: Validate requested versions are approved
+  ansible.builtin.assert:
+    that:
+      - _app.version in _versions
+    fail_msg: >-
+      {{ _app.name }} version '{{ _app.version }}' is not approved.
+      Approved versions: {{ _versions | join(', ') }}
+    quiet: true
+  loop: "{{ _software_catalog_requested }}"
+  loop_control:
+    loop_var: _app
+    label: "{{ _app.name }} {{ _app.version }}"
+  vars:
+    _versions: "{{ (software_catalog_approved[_app.name].versions | default({})).keys() | map('string') | list }}"
+  tags:
+    - software_catalog
+    - validation
+
+- name: Validate only side-by-side apps request multiple versions
+  ansible.builtin.assert:
+    that:
+      - _software_catalog_conflicts | length == 0
+    fail_msg: >-
+      Multiple present versions requested for apps that can't be installed
+      side-by-side: {{ _software_catalog_conflicts | join(', ') }}
+    quiet: true
+  vars:
+    _software_catalog_conflicts: >-
+      {%- set out = [] -%}
+      {%- for name, items in _software_catalog_requested | selectattr('state', 'eq', 'present') | groupby('name') -%}
+      {%-   if items | length > 1 and not (software_catalog_approved[name].side_by_side | default(false)) -%}
+      {%-     set _ = out.append(name) -%}
+      {%-   endif -%}
+      {%- endfor -%}
+      {{ out }}
+  tags:
+    - software_catalog
+    - validation
+
+- name: Add removals for catalog software the host is not selected for
+  ansible.builtin.set_fact:
+    _software_catalog_requested: "{{ _software_catalog_requested + _software_catalog_removals }}"
+  vars:
+    _software_catalog_selected: >-
+      {{ _software_catalog_requested | map(attribute='name')
+         | zip(_software_catalog_requested | map(attribute='version')) | map('join', '@') | list }}
+    _software_catalog_removals: >-
+      {%- set out = [] -%}
+      {%- for name, app in software_catalog_approved.items() -%}
+      {%-   for version in app.versions.keys() | map('string') -%}
+      {%-     if (name ~ '@' ~ version) not in _software_catalog_selected -%}
+      {%-       set _ = out.append({'name': name, 'version': version, 'state': 'absent'}) -%}
+      {%-     endif -%}
+      {%-   endfor -%}
+      {%- endfor -%}
+      {{ out }}
+  when:
+    - software_catalog_remove_unlisted | bool
+    - _software_catalog_source == 'groups'
+  tags:
+    - software_catalog
+    - validation
+
+# Flatten app-level fields with the chosen version's fields (version wins).
+- name: Resolve catalog entries for requested versions
+  ansible.builtin.set_fact:
+    _software_catalog_resolved: "{{ _software_catalog_items }}"
+  vars:
+    _software_catalog_items: >-
+      {%- set out = [] -%}
+      {%- for req in _software_catalog_requested -%}
+      {%-   set app = software_catalog_approved[req.name] -%}
+      {%-   set base = app | dict2items | rejectattr('key', 'in', ['versions', 'default_version']) | items2dict -%}
+      {%-   set ns = namespace(ver={}) -%}
+      {%-   for v in app.versions | dict2items if v.key | string == req.version -%}
+      {%-     set ns.ver = v.value -%}
+      {%-   endfor -%}
+      {%-   set _ = out.append(req | combine({'pkg': base | combine(ns.ver, {'version': req.version})})) -%}
+      {%- endfor -%}
+      {{ out }}
+  tags:
+    - software_catalog
+    - validation
+
+- name: Validate catalog entries
+  ansible.builtin.assert:
+    that:
+      - _app.state in ['present', 'absent']
+      - _pkg.method in ['msi', 'exe']
+      - _pkg.url is defined
+      - _pkg.method != 'exe' or (_pkg.arguments is defined and _pkg.creates_path is defined)
+      - _pkg.method != 'exe' or _app.state != 'absent' or _pkg.uninstall_arguments is defined
+      - not software_catalog_require_checksum or (_pkg.checksum | default('') | length > 0)
+    fail_msg: "Catalog entry '{{ _app.name }}' {{ _app.version }} is invalid for state '{{ _app.state }}'"
+    quiet: true
+  loop: "{{ _software_catalog_resolved }}"
+  loop_control:
+    loop_var: _app
+    label: "{{ _app.name }} {{ _app.version }}"
+  vars:
+    _pkg: "{{ _app.pkg }}"
+  tags:
+    - software_catalog
+    - validation
+
+- name: Ensure installer cache directory is present
+  ansible.windows.win_file:
+    path: "{{ software_catalog_download_dir }}"
+    state: directory
+  when: _software_catalog_resolved | length > 0
+  tags:
+    - software_catalog
+
+# Removals run first so a version switch (e.g. Node.js downgrade) can free the
+# slot before the replacement is installed.
+- name: Manage catalog applications
+  ansible.builtin.include_tasks:
+    file: "{{ _app.pkg.method }}.yml"
+    apply:
+      tags:
+        - software_catalog
+  loop: >-
+    {{ (_software_catalog_resolved | selectattr('state', 'eq', 'absent') | list)
+       + (_software_catalog_resolved | selectattr('state', 'eq', 'present') | list) }}
+  loop_control:
+    loop_var: _app
+    label: "{{ _app.name }} {{ _app.version }} ({{ _app.state }})"
+  vars:
+    _pkg: "{{ _app.pkg }}"
+  tags:
+    - software_catalog
+
+- name: Reboot if required by an installer
+  ansible.windows.win_reboot:
+    reboot_timeout: "{{ software_catalog_reboot_timeout }}"
+  when:
+    - software_catalog_auto_reboot | bool
+    - _software_catalog_reboot_required | default(false)
+  tags:
+    - software_catalog
+
+- name: Warn about pending reboot
+  ansible.builtin.debug:
+    msg: "A reboot is required to complete software changes (software_catalog_auto_reboot is false)"
+  when:
+    - not software_catalog_auto_reboot | bool
+    - _software_catalog_reboot_required | default(false)
+  tags:
+    - software_catalog

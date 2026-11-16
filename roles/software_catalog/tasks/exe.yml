@@ -1,0 +1,62 @@
+---
+# EXE installers carry no ProductCode, so `creates_path` (+ `creates_version`)
+# from the catalog decides whether the approved version is installed.
+
+# For removals that re-run the installer, check first so we don't download an
+# installer just to learn there is nothing to remove.
+- name: "Check install path | {{ _pkg.display_name | default(_app.name) ~ ' ' ~ _pkg.version }}"
+  ansible.windows.win_stat:
+    path: "{{ _pkg.creates_path }}"
+    get_checksum: false
+  register: r_software_catalog_creates  # noqa: var-naming[no-role-prefix]  (CLAUDE.md: registered vars use r_)
+  when:
+    - _app.state == 'absent'
+    - _pkg.product_id is not defined
+
+- name: "Download installer | {{ _pkg.display_name | default(_app.name) ~ ' ' ~ _pkg.version }}"
+  ansible.windows.win_get_url:
+    url: "{{ _pkg.url }}"
+    dest: "{{ software_catalog_download_dir }}\\{{ _pkg.url | urldecode | basename }}"
+    checksum: "{{ _pkg.checksum if (_pkg.checksum | default('') | length > 0) else omit }}"
+    checksum_algorithm: sha256
+    force: false
+  register: r_software_catalog_download  # noqa: var-naming[no-role-prefix]  (CLAUDE.md: registered vars use r_)
+  when: >-
+    _app.state == 'present'
+    or (_pkg.product_id is not defined and r_software_catalog_creates.stat.exists)
+
+- name: "Install via exe | {{ _pkg.display_name | default(_app.name) ~ ' ' ~ _pkg.version }}"
+  ansible.windows.win_package:
+    path: "{{ r_software_catalog_download.dest }}"
+    arguments: "{{ _pkg.arguments }}"
+    creates_path: "{{ _pkg.creates_path }}"
+    creates_version: "{{ _pkg.creates_version | default(omit) }}"
+    wait_for_children: "{{ _pkg.wait_for_children | default(false) }}"
+    state: present
+  register: r_software_catalog_install  # noqa: var-naming[no-role-prefix]  (CLAUDE.md: registered vars use r_)
+  when: _app.state == 'present'
+
+# With product_id: run the registered UninstallString (+ uninstall_arguments).
+# Without it: re-run the cached installer with uninstall_arguments (e.g. the
+# .NET/WiX bundle `/uninstall` switch). creates_path (+ creates_version) gates
+# both, so only the requested version is removed.
+- name: "Uninstall via exe | {{ _pkg.display_name | default(_app.name) ~ ' ' ~ _pkg.version }}"
+  ansible.windows.win_package:
+    path: "{{ omit if _pkg.product_id is defined else r_software_catalog_download.dest }}"
+    product_id: "{{ _pkg.product_id | default(omit) }}"
+    arguments: "{{ _pkg.uninstall_arguments }}"
+    creates_path: "{{ _pkg.creates_path }}"
+    creates_version: "{{ _pkg.creates_version | default(omit) }}"
+    wait_for_children: "{{ _pkg.wait_for_children | default(false) }}"
+    state: absent
+  register: r_software_catalog_remove  # noqa: var-naming[no-role-prefix]  (CLAUDE.md: registered vars use r_)
+  when:
+    - _app.state == 'absent'
+    - _pkg.product_id is defined or r_software_catalog_creates.stat.exists
+
+- name: Record reboot requirement
+  ansible.builtin.set_fact:
+    _software_catalog_reboot_required: true
+  when: >-
+    (r_software_catalog_install.reboot_required | default(false))
+    or (r_software_catalog_remove.reboot_required | default(false))

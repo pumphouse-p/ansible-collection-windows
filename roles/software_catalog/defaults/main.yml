@@ -1,0 +1,60 @@
+---
+# defaults file for pumphouse_p.windows.software_catalog
+
+# -----------------------------------------------------------------------------
+# Selecting applications
+# -----------------------------------------------------------------------------
+# Applications are selected in one of two ways, in this order:
+#
+# 1. Explicit list (AAP survey / extra vars) - `software_catalog_apps`.
+#    When non-empty it is used as-is and inventory groups are ignored.
+#    Accepts a list or a newline-separated string (survey text area). Items:
+#      - notepadplusplus                 # default / pinned version
+#      - nodejs@20.18.0                  # specific version
+#      - {name: nodejs, version: "20.18.0", state: absent}
+#
+# 2. Inventory groups (default) - every group the host belongs to whose name
+#    matches a catalog id (e.g. `notepadplusplus`, `java_runtime`). Nested
+#    "bundle" groups work because parent group membership is inherited.
+software_catalog_apps: []
+
+# Use inventory group membership when `software_catalog_apps` is empty
+software_catalog_use_groups: true
+
+# Version pins per catalog id, e.g. set on an AAP inventory group or host:
+#   software_catalog_pins:
+#     nodejs: "20.18.0"
+# Apps without a pin use the catalog `default_version`. Explicit
+# `name@version` / `version:` selections take precedence over pins.
+software_catalog_pins: {}
+
+# State applied to explicit items that do not set one: present | absent
+software_catalog_default_state: present
+
+# Desired-state enforcement (group mode only). When true, every catalog
+# app/version the host is NOT selected for is removed - e.g. taking a host
+# out of the `nodejs` group uninstalls Node.js on the next run. It also
+# removes non-selected versions of side-by-side apps. Ignored when an
+# explicit `software_catalog_apps` list is given, so a targeted survey run
+# can never strip unrelated software.
+software_catalog_remove_unlisted: false
+
+# -----------------------------------------------------------------------------
+# Catalog & execution
+# -----------------------------------------------------------------------------
+# Path to the central catalog file. Override only to point at a catalog kept
+# outside the role (e.g. a shared inventory repo).
+software_catalog_file: "{{ role_path }}/vars/software_catalog.yml"
+
+# Local cache for downloaded msi/exe installers. Installers are kept so that
+# re-runs don't re-download and MSI uninstalls can read the ProductCode.
+software_catalog_download_dir: 'C:\ProgramData\Ansible\SoftwareCatalog'
+
+# Fail if an msi/exe catalog entry has no checksum
+software_catalog_require_checksum: false
+
+# Reboot automatically if any installer reports a reboot is required
+software_catalog_auto_reboot: false
+
+# Maximum time to wait for reboot to complete (in seconds)
+software_catalog_reboot_timeout: 3600

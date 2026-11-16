@@ -1,0 +1,23 @@
+---
+# The MSI is cached locally so win_package can read its ProductCode, which makes
+# both install and uninstall idempotent without hard-coding GUIDs.
+- name: "Download installer | {{ _pkg.display_name | default(_app.name) ~ ' ' ~ _pkg.version | default('') }}"
+  ansible.windows.win_get_url:
+    url: "{{ _pkg.url }}"
+    dest: "{{ software_catalog_download_dir }}\\{{ _pkg.url | urldecode | basename }}"
+    checksum: "{{ _pkg.checksum if (_pkg.checksum | default('') | length > 0) else omit }}"
+    checksum_algorithm: sha256
+    force: false
+  register: r_software_catalog_download  # noqa: var-naming[no-role-prefix]  (CLAUDE.md: registered vars use r_)
+
+- name: "Manage msi | {{ _pkg.display_name | default(_app.name) ~ ' ' ~ _pkg.version ~ ' (' ~ _app.state ~ ')' }}"
+  ansible.windows.win_package:
+    path: "{{ r_software_catalog_download.dest }}"
+    arguments: "{{ _pkg.arguments | default(omit) if _app.state == 'present' else omit }}"
+    state: "{{ _app.state }}"
+  register: r_software_catalog_result  # noqa: var-naming[no-role-prefix]  (CLAUDE.md: registered vars use r_)
+
+- name: Record reboot requirement
+  ansible.builtin.set_fact:
+    _software_catalog_reboot_required: true
+  when: r_software_catalog_result.reboot_required | default(false)
