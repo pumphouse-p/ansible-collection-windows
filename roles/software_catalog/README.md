@@ -17,7 +17,7 @@ Supported install methods (no package manager required):
 | Method | Detection / idempotency                                           |
 |:------:|-------------------------------------------------------------------|
 | `msi`  | ProductCode read from the cached MSI                              |
-| `exe`  | `creates_path` (+ optional `creates_version`); `product_id` for removal |
+| `exe`  | `creates_path` (+ optional `creates_version`); `uninstall_path` or `product_id` for removal |
 
 Installers are downloaded once to `software_catalog_download_dir` and reused.
 
@@ -87,8 +87,8 @@ software_catalog_approved:
 Then create a matching inventory group (`7zip`). Always quote version keys so
 YAML keeps them as strings. For an `exe`, also set `arguments`, `creates_path`
 (+ `creates_version` if all versions share a path) and, for removal,
-`uninstall_arguments` (plus `product_id` if the installer can't uninstall
-itself). To roll out a new version, add it under `versions` and update
+`uninstall_arguments` (plus `uninstall_path` or `product_id` if the installer
+can't uninstall itself). To roll out a new version, add it under `versions` and update
 `default_version`.
 
 ## Inventory Example

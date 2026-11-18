@@ -39,6 +39,10 @@
 #   product_id:          Uninstall registry key name. When set, removal runs
 #                        the registered UninstallString instead of
 #                        re-running the installer                  (optional)
+#   uninstall_path:      Path to an uninstaller already on the host. When
+#                        set, removal runs it (+ uninstall_arguments) instead
+#                        of product_id / re-running the installer. Use when
+#                        the registry key name isn't predictable  (optional)
 #   wait_for_children:   Wait for spawned child processes (needed for
 #                        NSIS uninstallers that re-launch themselves) (optional)
 #
@@ -72,8 +76,9 @@ software_catalog_approved:
   # Single install - the NSIS full installer installs over whatever version is
   # present. firefox.exe's 4-part FileVersion ends in a build number, so
   # creates_version must match it exactly (read it from core\firefox.exe in
-  # the installer). The uninstall key name embeds the version, so product_id
-  # is per version and removal only targets the requested one.
+  # the installer). Removal runs Firefox's own uninstaller (helper.exe), which
+  # is always at the same path; creates_version ensures only the requested
+  # version is removed.
   firefox:
     display_name: Mozilla Firefox (x64 en-US)
     method: exe
@@ -81,6 +86,7 @@ software_catalog_approved:
     side_by_side: false
     arguments: /S
     creates_path: C:\Program Files\Mozilla Firefox\firefox.exe
+    uninstall_path: C:\Program Files\Mozilla Firefox\uninstall\helper.exe
     uninstall_arguments: /S
     wait_for_children: true
     versions:
@@ -88,12 +94,10 @@ software_catalog_approved:
         url: https://download-installer.cdn.mozilla.net/pub/firefox/releases/160.0.1/win64/en-US/Firefox%20Setup%20160.0.1.exe
         checksum: "768e29619f3463c157f20c5ab1e4d480acfb0d84f1a39ee60ef3151fed91ceb2"
         creates_version: "160.0.1.575"
-        product_id: Mozilla Firefox 160.0.1 (x64 en-US)
       "159.0.1":
         url: https://download-installer.cdn.mozilla.net/pub/firefox/releases/159.0.1/win64/en-US/Firefox%20Setup%20159.0.1.exe
         checksum: "729af643b8e0a3809d6153a57a448cb96a01e6fa5e2e7ff782152ede6202eadd"
         creates_version: "159.0.1.587"
-        product_id: Mozilla Firefox 159.0.1 (x64 en-US)
 
   # Single install - Node.js MSIs share an UpgradeCode. Moving to a newer
   # version upgrades in place; the MSI refuses to downgrade, so remove the

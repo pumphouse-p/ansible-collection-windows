@@ -12,6 +12,7 @@
   when:
     - _app.state == 'absent'
     - _pkg.product_id is not defined
+    - _pkg.uninstall_path is not defined
 
 - name: "Download installer | {{ _pkg.display_name | default(_app.name) ~ ' ' ~ _pkg.version }}"
   ansible.windows.win_get_url:
@@ -23,7 +24,8 @@
   register: r_software_catalog_download  # noqa: var-naming[no-role-prefix]  (CLAUDE.md: registered vars use r_)
   when: >-
     _app.state == 'present'
-    or (_pkg.product_id is not defined and r_software_catalog_creates.stat.exists)
+    or (_pkg.product_id is not defined and _pkg.uninstall_path is not defined
+        and r_software_catalog_creates.stat.exists)
 
 - name: "Install via exe | {{ _pkg.display_name | default(_app.name) ~ ' ' ~ _pkg.version }}"
   ansible.windows.win_package:
@@ -36,14 +38,17 @@
   register: r_software_catalog_install  # noqa: var-naming[no-role-prefix]  (CLAUDE.md: registered vars use r_)
   when: _app.state == 'present'
 
+# With uninstall_path: run that uninstaller already on the host (+ uninstall_arguments).
 # With product_id: run the registered UninstallString (+ uninstall_arguments).
-# Without it: re-run the cached installer with uninstall_arguments (e.g. the
+# Otherwise: re-run the cached installer with uninstall_arguments (e.g. the
 # .NET/WiX bundle `/uninstall` switch). creates_path (+ creates_version) gates
-# both, so only the requested version is removed.
+# all three, so only the requested version is removed.
 - name: "Uninstall via exe | {{ _pkg.display_name | default(_app.name) ~ ' ' ~ _pkg.version }}"
   ansible.windows.win_package:
-    path: "{{ omit if _pkg.product_id is defined else r_software_catalog_download.dest }}"
-    product_id: "{{ _pkg.product_id | default(omit) }}"
+    path: >-
+      {{ _pkg.uninstall_path if _pkg.uninstall_path is defined
+         else (omit if _pkg.product_id is defined else r_software_catalog_download.dest) }}
+    product_id: "{{ omit if _pkg.uninstall_path is defined else (_pkg.product_id | default(omit)) }}"
     arguments: "{{ _pkg.uninstall_arguments }}"
     creates_path: "{{ _pkg.creates_path }}"
     creates_version: "{{ _pkg.creates_version | default(omit) }}"
@@ -52,7 +57,9 @@
   register: r_software_catalog_remove  # noqa: var-naming[no-role-prefix]  (CLAUDE.md: registered vars use r_)
   when:
     - _app.state == 'absent'
-    - _pkg.product_id is defined or r_software_catalog_creates.stat.exists
+    - >-
+      _pkg.product_id is defined or _pkg.uninstall_path is defined
+      or r_software_catalog_creates.stat.exists
 
 - name: Record reboot requirement
   ansible.builtin.set_fact:
