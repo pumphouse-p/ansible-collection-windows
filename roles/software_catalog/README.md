@@ -58,6 +58,7 @@ Installers are downloaded once to `software_catalog_download_dir` and reused.
 | Id                | Application               | Method | Approved versions (**default**) | Side-by-side |
 |-------------------|---------------------------|:------:|---------------------------------|:------------:|
 | `notepadplusplus` | Notepad++ (x64)           | exe    | **8.7.1**, 8.6.9                | no           |
+| `firefox`         | Mozilla Firefox (x64 en-US) | exe  | **160.0.1**, 159.0.1            | no           |
 | `nodejs`          | Node.js LTS (x64)         | msi    | **22.11.0**, 20.18.0            | no           |
 | `dotnet_runtime`  | .NET Runtime (x64)        | exe    | **8.0.11**, 9.0.0               | yes          |
 | `java_runtime`    | Eclipse Temurin JRE (x64) | msi    | **21.0.5+11**, 17.0.13+11       | yes          |
@@ -165,6 +166,11 @@ trigger `remove_unlisted`, so a targeted run can't strip other software.
   is removed first automatically; otherwise remove it with an explicit
   `nodejs@22.11.0` + `state: absent` run before pinning 20.18.0.
 * Notepad++ installs over whatever version is present, in either direction.
+* Firefox also installs over the present version in either direction. After a
+  downgrade, Firefox's profile downgrade protection may prompt users to create
+  a new profile. Firefox's built-in updater stays enabled unless you turn it
+  off via enterprise policy (`DisableAppUpdate`). Otherwise it moves hosts past
+  the catalog version, and the next run reinstalls the pinned version.
 
 ## License
 
